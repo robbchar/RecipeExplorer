@@ -2,7 +2,7 @@
   "name": "recipe-explorer",
   "version": "0.1.0",
   "bin": {
-    "recipe-explorer": "bin/recipe-explorer.js"
+    "recipe-explorer": "infrastructure/bin/recipe-explorer.js"
   },
   "scripts": {
     "build": "tsc",

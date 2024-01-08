@@ -1,0 +1,2 @@
+tried to pull from the example I got from FooBar channel but that is using old was cdk npm libs so trying to jconvert
+found new example from https://cdkworkshop.com/20-typescript/70-advanced-topics/200-pipelines/3000-new-pipeline.html

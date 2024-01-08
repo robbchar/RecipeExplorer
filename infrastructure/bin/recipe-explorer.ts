@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 import "source-map-support/register";
 import * as cdk from "aws-cdk-lib";
-import { RecipeExplorerStack } from "../lib/recipe-explorer-stack";
+import { RecipeExplorerPipelineStack } from "../lib/recipe-explorer-pipeline-stack";
+
+import * as config from "../pipeline.config.json";
 
 const app = new cdk.App();
-new RecipeExplorerStack(app, "RecipeExplorerStack", {
+new RecipeExplorerPipelineStack(app, "RecipeExplorerPipelineStack", {
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
    * but a single synthesized template can be deployed anywhere. */
@@ -13,6 +15,10 @@ new RecipeExplorerStack(app, "RecipeExplorerStack", {
   // env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
   /* Uncomment the next line if you know exactly what Account and Region you
    * want to deploy the stack to. */
-  // env: { account: '123456789012', region: 'us-east-1' },
+  env: {
+    account: config.cdk_pipeline.build_environment.account,
+    region: config.cdk_pipeline.build_environment.region,
+  },
   /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
 });
+app.synth();

@@ -17,11 +17,10 @@ export class RecipeExplorerPipelineStack extends Stack {
 
     // const pipeline = new codepipeline.Pipeline(this, "Pipeline", {
     //   pipelineName: `RecipeExplorerPipeline`,
-    //   restartExecutionOnUpdate: true,
+    //   restartExecuftionOnUpdate: true,
     // });
 
-    // The basic pipeline declaration. This sets the initial structure
-    // of our pipeline
+    // The basic pipeline declaration. This sets the initial structure of our pipeline
     const pipeline = new CodePipeline(this, "Pipeline", {
       pipelineName: "RecipeExplorerPipeline",
       synth: new ShellStep("Synth", {

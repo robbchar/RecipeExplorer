@@ -1,9 +1,9 @@
-import * as AWS from "aws-sdk";
+import { DynamoDB } from "@aws-sdk/client-dynamodb";
 
 const TABLE_NAME = process.env.TABLE_NAME || "";
 const PRIMARY_KEY = process.env.PRIMARY_KEY || "";
 
-const db = new AWS.DynamoDB.DocumentClient();
+const db = new DynamoDB();
 
 export const handler = async (event: any = {}): Promise<any> => {
   const requestedItemId = event.pathParameters.id;

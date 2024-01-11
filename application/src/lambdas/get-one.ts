@@ -1,9 +1,11 @@
-import * as AWS from "aws-sdk";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
 
 const TABLE_NAME = process.env.TABLE_NAME || "";
 const PRIMARY_KEY = process.env.PRIMARY_KEY || "";
 
-const db = new AWS.DynamoDB.DocumentClient();
+const client = new DynamoDBClient({});
+const docClient = DynamoDBDocumentClient.from(client);
 
 export const handler = async (event: any = {}): Promise<any> => {
   const requestedItemId = event.pathParameters.id;
@@ -22,7 +24,7 @@ export const handler = async (event: any = {}): Promise<any> => {
   };
 
   try {
-    const response = await db.get(params).promise();
+    const response = await docClient.send(params);
     if (response.Item) {
       return { statusCode: 200, body: JSON.stringify(response.Item) };
     } else {

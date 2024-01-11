@@ -13,11 +13,25 @@ import {
   NodejsFunction,
   NodejsFunctionProps,
 } from "aws-cdk-lib/aws-lambda-nodejs";
+import {
+  CodePipeline,
+  CodePipelineSource,
+  ShellStep,
+} from "aws-cdk-lib/pipelines";
 import { join } from "path";
 
 export class RecipeExplorerAppStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
+
+    // The basic pipeline declaration. This sets the initial structure of our pipeline
+    const pipeline = new CodePipeline(this, "Pipeline", {
+      pipelineName: "RecipeExplorerPipeline",
+      synth: new ShellStep("Synth", {
+        input: CodePipelineSource.gitHub("robbchar/RecipeExplorer", "main"),
+        commands: ["npm ci", "npm run build", "npx cdk synth"],
+      }),
+    });
 
     const dynamoTable = new Table(this, "items", {
       partitionKey: {
@@ -37,7 +51,7 @@ export class RecipeExplorerAppStack extends Stack {
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
         externalModules: [
-          "aws-sdk", // Use the 'aws-sdk' available in the Lambda runtime
+          // "aws-sdk", // Use the 'aws-sdk' available in the Lambda runtime
         ],
       },
       depsLockFilePath: join(

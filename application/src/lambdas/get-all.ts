@@ -1,8 +1,8 @@
-import * as AWS from "aws-sdk";
+import { DynamoDB } from "@aws-sdk/client-dynamodb";
 
 const TABLE_NAME = process.env.TABLE_NAME || "";
 
-const db = new AWS.DynamoDB.DocumentClient();
+const db = new DynamoDB();
 
 export const handler = async (): Promise<any> => {
   const params = {

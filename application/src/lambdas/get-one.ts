@@ -16,21 +16,17 @@ export const handler = async (event: any = {}): Promise<any> => {
     };
   }
 
-  const params = {
+  const command = new GetCommand({
     TableName: TABLE_NAME,
     Key: {
       [PRIMARY_KEY]: requestedItemId,
     },
-  };
+  });
 
-  try {
-    const response = await docClient.send(params);
-    if (response.Item) {
-      return { statusCode: 200, body: JSON.stringify(response.Item) };
-    } else {
-      return { statusCode: 404 };
-    }
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
+  const response = await docClient.send(command);
+  if (response.Item) {
+    return { statusCode: 200, body: JSON.stringify(response.Item) };
+  } else {
+    return { statusCode: 404 };
   }
 };

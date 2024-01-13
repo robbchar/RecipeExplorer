@@ -1,4 +1,4 @@
-import { DynamoDB } from "@aws-sdk/client-dynamodb";
+import { DynamoDB, PutItemCommandOutput } from "@aws-sdk/client-dynamodb";
 import { v4 as uuidv4 } from "uuid";
 
 const TABLE_NAME = process.env.TABLE_NAME || "";
@@ -11,11 +11,12 @@ const RESERVED_RESPONSE = `Error: You're using AWS reserved keywords as attribut
 
 export const handler = async (event: any = {}): Promise<any> => {
   if (!event.body) {
-    return {
+    return new Promise(() => ({
       statusCode: 400,
       body: "invalid request, you are missing the parameter body",
-    };
+    }));
   }
+
   const item =
     typeof event.body == "object" ? event.body : JSON.parse(event.body);
   item[PRIMARY_KEY] = uuidv4();
@@ -24,15 +25,16 @@ export const handler = async (event: any = {}): Promise<any> => {
     Item: item,
   };
 
-  try {
-    await db.put(params).promise();
-    return { statusCode: 201, body: "" };
-  } catch (dbError) {
-    const errorResponse =
-      dbError.code === "ValidationException" &&
-      dbError.message.includes("reserved keyword")
-        ? RESERVED_RESPONSE
-        : DYNAMODB_EXECUTION_ERROR;
-    return { statusCode: 500, body: errorResponse };
-  }
+  await db.putItem(params, function (err: { stack: any }, data: any) {
+    if (err) return { statusCode: 201, body: err }; // an error occurred
+    else return { statusCode: 201, body: "" }; // successful response
+    /*
+      data = {
+       ConsumedCapacity: {
+        CapacityUnits: 1, 
+        TableName: "Music"
+       }
+      }
+      */
+  });
 };

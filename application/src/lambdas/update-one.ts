@@ -1,12 +1,11 @@
-import { DynamoDB } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 
 const TABLE_NAME = process.env.TABLE_NAME || "";
 const PRIMARY_KEY = process.env.PRIMARY_KEY || "";
 
-const RESERVED_RESPONSE = `Error: You're using AWS reserved keywords as attributes`,
-  DYNAMODB_EXECUTION_ERROR = `Error: Execution update, caused a Dynamodb error, please take a look at your CloudWatch Logs.`;
-
-const db = new DynamoDB();
+const client = new DynamoDBClient({});
+const docClient = DynamoDBDocumentClient.from(client);
 
 export const handler = async (event: any = {}): Promise<any> => {
   if (!event.body) {
@@ -32,32 +31,27 @@ export const handler = async (event: any = {}): Promise<any> => {
   }
 
   const firstProperty = editedItemProperties.splice(0, 1);
-  const params: any = {
+  const command = new UpdateCommand({
     TableName: TABLE_NAME,
     Key: {
       [PRIMARY_KEY]: editedItemId,
     },
     UpdateExpression: `set ${firstProperty} = :${firstProperty}`,
-    ExpressionAttributeValues: {},
     ReturnValues: "UPDATED_NEW",
-  };
-  params.ExpressionAttributeValues[`:${firstProperty}`] =
+  });
+  command.input.ExpressionAttributeValues = {};
+  command.input.ExpressionAttributeValues[`:${firstProperty}`] =
     editedItem[`${firstProperty}`];
 
   editedItemProperties.forEach((property) => {
-    params.UpdateExpression += `, ${property} = :${property}`;
-    params.ExpressionAttributeValues[`:${property}`] = editedItem[property];
+    command.input.UpdateExpression += `, ${property} = :${property}`;
+    if (command.input.ExpressionAttributeValues === undefined)
+      command.input.ExpressionAttributeValues = {};
+
+    command.input.ExpressionAttributeValues[`:${property}`] =
+      editedItem[property];
   });
 
-  try {
-    await db.update(params).promise();
-    return { statusCode: 204, body: "" };
-  } catch (dbError) {
-    const errorResponse =
-      dbError.code === "ValidationException" &&
-      dbError.message.includes("reserved keyword")
-        ? RESERVED_RESPONSE
-        : DYNAMODB_EXECUTION_ERROR;
-    return { statusCode: 500, body: errorResponse };
-  }
+  await docClient.send(command);
+  return { statusCode: 204, body: "" };
 };

@@ -10,7 +10,7 @@ export const handler = async (): Promise<any> => {
   };
 
   try {
-    const response = await db.scan(params).promise();
+    const response = await db.scan(params);
     return { statusCode: 200, body: JSON.stringify(response.Items) };
   } catch (dbError) {
     return { statusCode: 500, body: JSON.stringify(dbError) };

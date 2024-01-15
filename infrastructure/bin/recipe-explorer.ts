@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import "source-map-support/register";
 import * as cdk from "aws-cdk-lib";
-import { RecipeExplorerPipelineStack } from "../lib/recipe-explorer-pipeline-stack";
 import { RecipeExplorerAppStack } from "../lib/recipe-explorer-app-stack";
 
 import * as config from "../pipeline.config.json";

@@ -33,12 +33,16 @@ export class RecipeExplorerAppStack extends Stack {
       }),
     });
 
-    const dynamoTable = new Table(this, "items", {
+    // jthe dynamo table for the app using a single table design
+    const dynamoTable = new Table(this, "RecipeExplorer", {
       partitionKey: {
-        name: "itemId",
+        name: "pk",
         type: AttributeType.STRING,
       },
-      tableName: "items",
+      sortKey: {
+        name: "sk",
+        type: AttributeType.STRING,
+      },
 
       /**
        *  The default removal policy is RETAIN, which means that cdk destroy will not attempt to delete
@@ -59,66 +63,108 @@ export class RecipeExplorerAppStack extends Stack {
         "../../application/src/lambdas",
         "package-lock.json"
       ),
-      environment: {
-        PRIMARY_KEY: "itemId",
-        TABLE_NAME: dynamoTable.tableName,
-      },
       runtime: Runtime.NODEJS_20_X,
     };
 
     // Create a Lambda function for each of the CRUD operations
-    const getOneLambda = new NodejsFunction(this, "getOneItemFunction", {
-      entry: join(__dirname, "../../application/src/lambdas", "get-one.ts"),
-      ...nodeJsFunctionProps,
-    });
-    const getAllLambda = new NodejsFunction(this, "getAllItemsFunction", {
-      entry: join(__dirname, "../../application/src/lambdas", "get-all.ts"),
-      ...nodeJsFunctionProps,
-    });
-    const createOneLambda = new NodejsFunction(this, "createItemFunction", {
-      entry: join(__dirname, "../../application/src/lambdas", "create.ts"),
-      ...nodeJsFunctionProps,
-    });
-    const updateOneLambda = new NodejsFunction(this, "updateItemFunction", {
-      entry: join(__dirname, "../../application/src/lambdas", "update-one.ts"),
-      ...nodeJsFunctionProps,
-    });
-    const deleteOneLambda = new NodejsFunction(this, "deleteItemFunction", {
-      entry: join(__dirname, "../../application/src/lambdas", "delete-one.ts"),
-      ...nodeJsFunctionProps,
-    });
+    const getOneRecipeLambda = new NodejsFunction(
+      this,
+      "getOneRecipeFunction",
+      {
+        entry: join(
+          __dirname,
+          "../../application/src/lambdas/recipes",
+          "get-one.ts"
+        ),
+        ...nodeJsFunctionProps,
+      }
+    );
+    const getAllRecipesLambda = new NodejsFunction(
+      this,
+      "getAllRecipesFunction",
+      {
+        entry: join(
+          __dirname,
+          "../../application/src/lambdas/recipes",
+          "get-all-for-user.ts"
+        ),
+        ...nodeJsFunctionProps,
+      }
+    );
+    const createOneRecipeLambda = new NodejsFunction(
+      this,
+      "createRecipeFunction",
+      {
+        entry: join(
+          __dirname,
+          "../../application/src/lambdas/recipes",
+          "create.ts"
+        ),
+        ...nodeJsFunctionProps,
+      }
+    );
+    const updateOneRecipeLambda = new NodejsFunction(
+      this,
+      "updateRecipeFunction",
+      {
+        entry: join(
+          __dirname,
+          "../../application/src/lambdas/recipes",
+          "update-one.ts"
+        ),
+        ...nodeJsFunctionProps,
+      }
+    );
+    const deleteOneRecipeLambda = new NodejsFunction(
+      this,
+      "deleteRecipeFunction",
+      {
+        entry: join(
+          __dirname,
+          "../../application/src/lambdas/recipes",
+          "delete-one.ts"
+        ),
+        ...nodeJsFunctionProps,
+      }
+    );
 
     // Grant the Lambda function read access to the DynamoDB table
-    dynamoTable.grantReadWriteData(getAllLambda);
-    dynamoTable.grantReadWriteData(getOneLambda);
-    dynamoTable.grantReadWriteData(createOneLambda);
-    dynamoTable.grantReadWriteData(updateOneLambda);
-    dynamoTable.grantReadWriteData(deleteOneLambda);
+    dynamoTable.grantReadData(getAllRecipesLambda);
+    dynamoTable.grantReadData(getOneRecipeLambda);
+    dynamoTable.grantReadWriteData(createOneRecipeLambda);
+    dynamoTable.grantReadWriteData(updateOneRecipeLambda);
+    dynamoTable.grantReadWriteData(deleteOneRecipeLambda);
 
     // Integrate the Lambda functions with the API Gateway resource
-    const getAllIntegration = new LambdaIntegration(getAllLambda);
-    const createOneIntegration = new LambdaIntegration(createOneLambda);
-    const getOneIntegration = new LambdaIntegration(getOneLambda);
-    const updateOneIntegration = new LambdaIntegration(updateOneLambda);
-    const deleteOneIntegration = new LambdaIntegration(deleteOneLambda);
+    const getAllRecipesIntegration = new LambdaIntegration(getAllRecipesLambda);
+    const createOneRecipeIntegration = new LambdaIntegration(
+      createOneRecipeLambda
+    );
+    const getOneRecipeIntegration = new LambdaIntegration(getOneRecipeLambda);
+    const updateOneRecipeIntegration = new LambdaIntegration(
+      updateOneRecipeLambda
+    );
+    const deleteOneRecipeIntegration = new LambdaIntegration(
+      deleteOneRecipeLambda
+    );
 
     // Create an API Gateway resource for each of the CRUD operations
-    const api = new RestApi(this, "itemsApi", {
-      restApiName: "Items Service",
+    const api = new RestApi(this, "RecipeExplorerApi", {
+      restApiName: "Recipe Explorer Service",
       // In case you want to manage binary types, uncomment the following
       // binaryMediaTypes: ["*/*"],
     });
 
-    const items = api.root.addResource("items");
-    items.addMethod("GET", getAllIntegration);
-    items.addMethod("POST", createOneIntegration);
-    addCorsOptions(items);
+    const recipes = api.root.addResource("recipes");
+    recipes.addMethod("GET", getAllRecipesIntegration);
+    recipes.addMethod("POST", createOneRecipeIntegration);
+    addCorsOptions(recipes);
 
-    const singleItem = items.addResource("{id}");
-    singleItem.addMethod("GET", getOneIntegration);
-    singleItem.addMethod("PATCH", updateOneIntegration);
-    singleItem.addMethod("DELETE", deleteOneIntegration);
-    addCorsOptions(singleItem);
+    const singleRecipe = recipes.addResource("{id}");
+    singleRecipe.addMethod("GET", getOneRecipeIntegration);
+    singleRecipe.addMethod("PATCH", updateOneRecipeIntegration);
+    singleRecipe.addMethod("DELETE", deleteOneRecipeIntegration);
+    addCorsOptions(singleRecipe);
   }
 }
 
